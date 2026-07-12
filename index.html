@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Gamm Vert — Péremptions</title>
-  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -1138,36 +1138,27 @@
     if (!input.files || !input.files[0]) return;
     showToast('Analyse en cours...');
 
-    try {
-      const file = input.files[0];
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.src = url;
-      await new Promise(r => img.onload = r);
+    const file = input.files[0];
+    const url = URL.createObjectURL(file);
 
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+    Quagga.decodeSingle({
+      decoder: {
+        readers: ['ean_reader', 'ean_8_reader', 'code_128_reader', 'code_39_reader', 'upc_reader']
+      },
+      locate: true,
+      src: url
+    }, function(result) {
       URL.revokeObjectURL(url);
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const reader = new ZXingBrowser.MultiFormatReader();
-      const luminanceSource = new ZXingBrowser.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
-      const binaryBitmap = new ZXingBrowser.BinaryBitmap(new ZXingBrowser.HybridBinarizer(luminanceSource));
-      const result = reader.decode(binaryBitmap);
-
-      document.getElementById(targetId).value = result.getText();
-      if (callback) callback();
-
-    } catch(e) {
-      showToast('Code non reconnu — reessayez avec une photo plus nette', true);
-    }
-    input.value = '';
+      input.value = '';
+      if (result && result.codeResult) {
+        document.getElementById(targetId).value = result.codeResult.code;
+        if (callback) callback();
+      } else {
+        showToast('Code non reconnu — reessayez avec une photo plus nette', true);
+      }
+    });
   }
 
-  function openScanner() {}
   function closeScanner() {
     document.getElementById('scanner-overlay').classList.remove('open');
   }
