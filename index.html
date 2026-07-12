@@ -1067,7 +1067,10 @@
   <div class="solde-result" id="article-result">
     <div class="solde-field">
       <div class="solde-field-label">Code GCE</div>
-      <div class="solde-field-value" id="article-codegce">—</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="solde-field-value" id="article-codegce">—</div>
+        <div style="font-size:12px;color:var(--text-muted)" id="article-ean">—</div>
+      </div>
     </div>
     <div class="solde-field">
       <div class="solde-field-label">Nom</div>
@@ -1081,13 +1084,9 @@
       <div class="solde-field-label">Fabricant</div>
       <div class="solde-field-value" id="article-fabricant">—</div>
     </div>
-    <div class="solde-field">
-      <div class="solde-field-label">EAN</div>
-      <div class="solde-field-value" id="article-ean">—</div>
-    </div>
-    <div class="solde-field">
-      <div class="solde-field-label">Assort</div>
-      <div class="solde-field-value" id="article-assort">—</div>
+    <div class="solde-field" style="border-bottom:none">
+      <div class="solde-field-label">Plan Merch</div>
+      <div class="solde-field-value" id="article-assort" style="font-weight:800;font-size:15px">—</div>
     </div>
   </div>
 </div>
@@ -1316,7 +1315,45 @@
       document.getElementById('article-famille').textContent  = data.famille    || '—';
       document.getElementById('article-fabricant').textContent= data.fabricant  || '—';
       document.getElementById('article-ean').textContent      = data.ean        || '—';
-      document.getElementById('article-assort').textContent   = data.assort     || '—';
+
+      // Récupérer les données assortiment Naucelle
+      const assortEl = document.getElementById('article-assort');
+      assortEl.textContent = '—';
+      assortEl.style.color = '';
+
+      if (data.famille && data.assort) {
+        try {
+          const resA = await fetch(`${API}?action=getAssortiment&famille=${encodeURIComponent(data.famille)}`);
+          const textA = await resA.text();
+          const assortData = JSON.parse(textA);
+
+          if (!assortData.error) {
+            const articleAssortNum = data.assort === 'Option' ? -1 : parseInt(data.assort.replace('A',''));
+            const naucelleAssortNum = parseInt(assortData.assortiment.replace('A',''));
+
+            // Construire la concaténation
+            const parts = [];
+            if (data.assort === 'Option') parts.push('Option');
+            else parts.push(data.assort);
+            if (assortData.format)   parts.push(assortData.format);
+            if (assortData.nombre)   parts.push(assortData.nombre);
+            if (assortData.hauteur)  parts.push(assortData.hauteur);
+            assortEl.textContent = parts.join(' · ');
+
+            // Colorier selon Naucelle
+            if (data.assort === 'Option' || articleAssortNum <= naucelleAssortNum) {
+              assortEl.style.color = 'var(--green-light)'; // vert = dans assort Naucelle
+            } else {
+              assortEl.style.color = 'var(--text-muted)'; // gris = hors assort
+            }
+          } else {
+            assortEl.textContent = data.assort || '—';
+          }
+        } catch(e) {
+          assortEl.textContent = data.assort || '—';
+        }
+      }
+
       document.getElementById('article-result').classList.add('visible');
     } catch(e) {
       errEl.textContent = 'Erreur de connexion';
