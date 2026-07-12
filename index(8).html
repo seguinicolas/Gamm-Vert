@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Gamm Vert — Péremptions</title>
+  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1a0f;
+      --bg2: #162016;
+      --card: #1c2b1c;
+      --card2: #243024;
+      --green: #4caf50;
+      --green-light: #81c784;
+      --green-dark: #2e7d32;
+      --accent: #a5d6a7;
+      --yellow: #ffd600;
+      --orange: #ff9800;
+      --orange-dark: #e65100;
+      --red: #f44336;
+      --text: #e8f5e9;
+      --text-muted: #7a9e7a;
+      --border: #2e472e;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%);
+      padding: 52px 20px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -20px; left: 40px;
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .header-logo {
+      font-size: 28px;
+    }
+    .header-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .header-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      margin-left: 40px;
+    }
+
+    /* NAV TABS */
+    .nav-tabs {
+      display: flex;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-tab {
+      flex: 1;
+      padding: 14px 8px;
+      text-align: center;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .nav-tab.active {
+      color: var(--green-light);
+      border-bottom-color: var(--green);
+    }
+    .nav-tab .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+    /* SECTIONS */
+    .section { display: none; padding: 16px; }
+    .section.active { display: block; }
+
+    /* FORMULAIRE */
+    .form-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .form-card-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Lato', sans-serif;
+      font-size: 16px;
+      padding: 13px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    input[type="text"]:focus, input[type="date"]:focus {
+      border-color: var(--green);
+    }
+    input[type="text"]::placeholder { color: var(--text-muted); }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.6) sepia(1) saturate(2) hue-rotate(80deg);
+    }
+
+    .btn-search {
+      background: var(--green-dark);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px 18px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-search:active { background: var(--green); }
+
+    /* ARTICLE INFO */
+    .article-info {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+      display: none;
+    }
+    .article-info.visible { display: block; }
+    .article-name {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--green-light);
+      margin-bottom: 10px;
+    }
+    .article-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tag {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .tag span { color: var(--text); font-weight: 700; }
+
+    .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .field-group { margin-bottom: 14px; }
+
+    .btn-save {
+      width: 100%;
+      background: linear-gradient(135deg, var(--green-dark), var(--green));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s;
+    }
+    .btn-save:active { opacity: 0.8; }
+    .btn-save:disabled { opacity: 0.4; }
+
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--green-dark);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: var(--red); }
+
+    /* TABLEAU */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--green-dark);
+      border-color: var(--green-dark);
+      color: #fff;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius-sm);
+      padding: 10px 4px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-num {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+    }
+    .stat-label { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+    .stat-card.ok .stat-num { color: var(--green-light); }
+    .stat-card.warn .stat-num { color: var(--yellow); }
+    .stat-card.soon .stat-num { color: var(--orange); }
+    .stat-card.soon-dark .stat-num { color: var(--orange-dark); }
+    .stat-card.danger .stat-num { color: var(--red); }
+
+    .perem-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .perem-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      border-left: 4px solid var(--green);
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .perem-card.warn { border-left-color: var(--yellow); }
+    .perem-card.soon { border-left-color: var(--orange); }
+    .perem-card.soon-dark { border-left-color: var(--orange-dark); }
+    .perem-card.danger { border-left-color: var(--red); }
+
+    .perem-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .perem-code {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+      color: var(--accent);
+    }
+    .perem-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: 'Nunito', sans-serif;
+    }
+    .badge-ok { background: rgba(76,175,80,0.2); color: var(--green-light); }
+    .badge-warn { background: rgba(255,214,0,0.2); color: var(--yellow); }
+    .badge-soon { background: rgba(255,152,0,0.2); color: var(--orange); }
+    .badge-soon-dark { background: rgba(230,81,0,0.2); color: var(--orange-dark); }
+    .badge-danger { background: rgba(244,67,54,0.2); color: var(--red); }
+
+    .perem-nom {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .perem-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .perem-dates {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .perem-dates strong { color: var(--text); }
+
+    .delete-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    /* BOUTON TRAITER */
+    .btn-traiter {
+      margin-top: 10px;
+      width: 100%;
+      padding: 9px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--card2);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-traiter:active { opacity: 0.7; }
+    .btn-traiter.traite {
+      border-color: var(--green-dark);
+      color: var(--green-light);
+      background: rgba(46,125,50,0.15);
+    }
+
+    /* CARTE TRAITÉE */
+    .perem-card.traite {
+      opacity: 0.45;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* HAMBURGER MENU */
+    .hamburger-btn {
+      position: absolute;
+      top: 52px;
+      right: 16px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .hamburger-btn span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+    }
+    .hamburger-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 300;
+    }
+    .hamburger-overlay.open { display: block; }
+    .hamburger-panel {
+      position: absolute;
+      top: 0; right: 0;
+      width: 240px;
+      height: 100%;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      padding: 60px 0 20px;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+    }
+    .hamburger-overlay.open .hamburger-panel {
+      transform: translateX(0);
+    }
+    .hamburger-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .hamburger-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0 20px 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .hamburger-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    .hamburger-item:hover { background: var(--card); color: var(--text); }
+    .hamburger-item.active { color: var(--green-light); border-left-color: var(--green); background: var(--card); }
+    .hamburger-item .h-icon { font-size: 20px; }
+
+    /* SECTION SOLDES */
+    .solde-result {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-top: 16px;
+      display: none;
+    }
+    .solde-result.visible { display: block; }
+    .solde-field {
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .solde-field:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .solde-field-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .solde-field-value {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--text);
+    }
+    .solde-remise {
+      font-size: 28px;
+      color: var(--yellow);
+    }
+
+    /* SCANNER */
+    .btn-scan-below {
+      width: 100%;
+      background: var(--card2);
+      border: 1.5px solid var(--green-dark);
+      border-radius: var(--radius-sm);
+      color: var(--green-light);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 11px;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-scan-below:active { background: var(--card); }
+      background: var(--green-dark);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 20px;
+      padding: 0 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .btn-scan:active { opacity: 0.7; }
+    .scanner-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 500;
+      flex-direction: column;
+    }
+    .scanner-overlay.open { display: flex; }
+    .scanner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: rgba(0,0,0,0.8);
+    }
+    .scanner-title {
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .scanner-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    #scanner-video {
+      width: 100%;
+      flex: 1;
+      object-fit: cover;
+    }
+    .scanner-line {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 50%;
+      height: 2px;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: scan 2s infinite;
+    }
+    @keyframes scan {
+      0%, 100% { top: 35%; }
+      50% { top: 65%; }
+    }
+    .scanner-hint {
+      color: #fff;
+      text-align: center;
+      padding: 16px;
+      font-size: 13px;
+      background: rgba(0,0,0,0.8);
+      color: var(--text-muted);
+    }
+    .merch-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--green);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .merch-card.option { border-left-color: var(--yellow); }
+    .merch-code {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .merch-nom {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      margin-bottom: 8px;
+    }
+    .merch-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .merch-assort {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--card2);
+    }
+    .merch-assort.option { color: var(--yellow); }
+    .merch-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      padding: 6px 0;
+    }
+    .form-card.new-article { border: 1.5px solid var(--yellow); }
+    .form-card.new-article .form-card-title { color: var(--yellow); }
+    .field-group select {
+      width: 100%;
+      background: var(--card2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 12px 14px;
+      appearance: none;
+    }
+    .field-group select:focus { border-color: var(--green); outline: none; }
+    .btn-create-article {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--yellow);
+      color: #1a1a1a;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-create-article:active { opacity: 0.8; }
+
+    .error-msg {
+      background: rgba(244,67,54,0.1);
+      border: 1px solid rgba(244,67,54,0.3);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #ef9a9a;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* BOUTON RAFRAÎCHIR */
+    .btn-refresh {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px;
+      cursor: pointer;
+      margin-bottom: 14px;
+      transition: all 0.2s;
+    }
+    .btn-refresh:active { background: var(--card); color: var(--green-light); }
+
+    /* LÉGENDE */
+    .legende {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 12px;
+    }
+    .legende-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .legende-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .legende-row:last-child { border-bottom: none; }
+    .legende-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SCANNER OVERLAY -->
+<div class="scanner-overlay" id="scanner-overlay">
+  <div class="scanner-header">
+    <span class="scanner-title">📷 Scanner un code-barres</span>
+    <button class="scanner-close" onclick="closeScanner()">✕</button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px">
+    <div style="color:#fff;font-size:15px;text-align:center;font-family:'Nunito',sans-serif">
+      Prenez une photo du code-barres
+    </div>
+    <label style="background:var(--green-dark);color:#fff;padding:16px 32px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;cursor:pointer;display:flex;align-items:center;gap:10px">
+      📷 Ouvrir la caméra
+      <input type="file" id="scanner-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleScannerImage(this)">
+    </label>
+    <div id="scanner-status" style="color:var(--text-muted);font-size:13px;text-align:center"></div>
+  </div>
+</div>
+
+<header>
+  <div class="header-top">
+    <span class="header-logo">🌿</span>
+    <span class="header-title">Gamm Vert</span>
+  </div>
+  <div class="header-sub" id="header-sub">Gestion des peremptions</div>
+  <button class="hamburger-btn" onclick="openMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- MENU HAMBURGER -->
+<div class="hamburger-overlay" id="hamburger-overlay" onclick="closeMenuOutside(event)">
+  <div class="hamburger-panel">
+    <button class="hamburger-close" onclick="closeMenu()">✕</button>
+    <div class="hamburger-title">Navigation</div>
+    <div class="hamburger-item active" id="menu-peremptions" onclick="switchApp('peremptions')">
+      <span class="h-icon">📋</span> Peremptions
+    </div>
+    <div class="hamburger-item" id="menu-soldes" onclick="switchApp('soldes')">
+      <span class="h-icon">💰</span> Soldes
+    </div>
+    <div class="hamburger-item" id="menu-articles" onclick="switchApp('articles')">
+      <span class="h-icon">📦</span> Articles
+    </div>
+    <div class="hamburger-item" id="menu-merch" onclick="switchApp('merch')">
+      <span class="h-icon">🗂️</span> Merch
+    </div>
+  </div>
+</div>
+
+<!-- APP PEREMPTIONS -->
+<div id="app-peremptions">
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('tableau')">
+    <span class="tab-icon">📋</span>Tableau
+  </div>
+  <div class="nav-tab" onclick="switchTab('saisie')">
+    <span class="tab-icon">➕</span>Saisie
+  </div>
+</div>
+
+<!-- SECTION TABLEAU -->
+<div class="section active" id="section-tableau">
+  <div class="stats-row">
+    <div class="stat-card ok">
+      <div class="stat-num" id="stat-ok">—</div>
+      <div class="stat-label">✅ OK</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-num" id="stat-warn">—</div>
+      <div class="stat-label">🟡 -20%</div>
+    </div>
+    <div class="stat-card soon">
+      <div class="stat-num" id="stat-soon">—</div>
+      <div class="stat-label">🟠 -30%</div>
+    </div>
+    <div class="stat-card soon-dark">
+      <div class="stat-num" id="stat-soon-dark">—</div>
+      <div class="stat-label">🟤 -50%</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-num" id="stat-danger">—</div>
+      <div class="stat-label">🔴 Retrait</div>
+    </div>
+  </div>
+
+  <button class="btn-refresh" onclick="loadPeremptions()">🔄 Rafraîchir</button>
+
+  <div class="legende">
+    <div class="legende-title">📋 Légende</div>
+    <div class="legende-row">
+      <div class="legende-dot" style="background:var(--green-light)"></div>
+      <span style="color:var(--green-light);font-weight:700">Vert</span>
+      <span>— Plus de 60 jours avant péremption</span>
+    </div>
+    <div class="legende-row">
+      <div class="legende-dot" style="background:var(--yellow)"></div>
+      <span style="color:var(--yellow);font-weight:700">Jaune</span>
+      <span>— De 0 à 60 jours avant · <strong style="color:var(--yellow)">-20%</strong></span>
+    </div>
+    <div class="legende-row">
+      <div class="legende-dot" style="background:var(--orange)"></div>
+      <span style="color:var(--orange);font-weight:700">Orange</span>
+      <span>— Périmé depuis 0 à 45 jours · <strong style="color:var(--orange)">-30%</strong></span>
+    </div>
+    <div class="legende-row">
+      <div class="legende-dot" style="background:var(--orange-dark)"></div>
+      <span style="color:var(--orange-dark);font-weight:700">Orange foncé</span>
+      <span>— Périmé depuis 46 à 60 jours · <strong style="color:var(--orange-dark)">-50%</strong></span>
+    </div>
+    <div class="legende-row">
+      <div class="legende-dot" style="background:var(--red)"></div>
+      <span style="color:var(--red);font-weight:700">Rouge</span>
+      <span>— Périmé depuis plus de 60 jours · <strong style="color:var(--red)">À retirer</strong></span>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setFilter('tous', this)">Tous</button>
+    <button class="filter-btn" onclick="setFilter('danger', this)">🔴 Retrait</button>
+    <button class="filter-btn" onclick="setFilter('soon-dark', this)">🟤 -50%</button>
+    <button class="filter-btn" onclick="setFilter('soon', this)">🟠 -30%</button>
+    <button class="filter-btn" onclick="setFilter('warn', this)">🟡 -20%</button>
+    <button class="filter-btn" onclick="setFilter('ok', this)">✅ OK</button>
+  </div>
+  <div class="filter-row" style="margin-top:-6px">
+    <button class="filter-btn active" id="filtre-traite-tous" onclick="setFiltreTraite('tous', this)">Tous</button>
+    <button class="filter-btn" id="filtre-traite-non" onclick="setFiltreTraite('non', this)">Non traités</button>
+    <button class="filter-btn" id="filtre-traite-oui" onclick="setFiltreTraite('oui', this)">Traités</button>
+  </div>
+
+  <div id="liste-peremptions">
+    <div class="loading"><div class="spinner"></div>Chargement...</div>
+  </div>
+</div>
+
+<!-- SECTION SAISIE -->
+<div class="section" id="section-saisie">
+  <div class="form-card">
+    <div class="form-card-title">🔍 Rechercher un article</div>
+    <div class="search-row">
+      <div class="input-wrap">
+        <input type="text" id="input-search" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+      </div>
+      <button class="btn-search" onclick="searchArticle()">Chercher</button>
+    </div>
+    <label class="btn-scan-below">
+      📷 Scanner un code-barres
+      <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScannerImage(this, 'input-search', searchArticle)">
+    </label>
+    <div class="error-msg" id="error-search"></div>
+    <div class="article-info" id="article-info">
+      <div class="article-name" id="art-nom">—</div>
+      <div class="article-tags">
+        <div class="tag">EAN : <span id="art-ean">—</span></div>
+        <div class="tag">Famille : <span id="art-famille">—</span></div>
+        <div class="tag">Fabricant : <span id="art-fabricant">—</span></div>
+        <div class="tag">Assort : <span id="art-assort">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card new-article" id="form-new-article" style="display:none">
+    <div class="form-card-title">➕ Nouvel article</div>
+    <div class="field-group">
+      <div class="label">Code GCE *</div>
+      <input type="text" id="new-codegce" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <div class="label">Nom *</div>
+      <input type="text" id="new-nom" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <div class="label">Famille *</div>
+      <input type="text" id="new-famille" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <div class="label">EAN *</div>
+      <input type="text" id="new-ean" inputmode="numeric" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <div class="label">Fabricant (optionnel)</div>
+      <input type="text" id="new-fabricant" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    </div>
+    <div class="field-group">
+      <div class="label">Assort (optionnel)</div>
+      <select id="new-assort">
+        <option value="">— Non renseigné —</option>
+        <option value="A0">A0</option>
+        <option value="A1">A1</option>
+        <option value="A2">A2</option>
+        <option value="A3">A3</option>
+        <option value="A4">A4</option>
+        <option value="A5">A5</option>
+        <option value="A6">A6</option>
+        <option value="A7">A7</option>
+      </select>
+    </div>
+    <button class="btn-create-article" onclick="createArticle()">✅ Créer l'article</button>
+  </div>
+
+  <div class="form-card" id="form-dates" style="display:none">
+    <div class="form-card-title">📅 Dates</div>
+    <div class="field-group">
+      <div class="label">Date de péremption * (JJ/MM/AAAA)</div>
+      <input type="text" id="input-peremption" placeholder="ex: 25/06/2026" maxlength="10" inputmode="numeric">
+    </div>
+    <div class="field-group">
+      <div class="label">Date de réception (JJ/MM/AAAA)</div>
+      <input type="text" id="input-reception" placeholder="ex: 25/06/2026" maxlength="10" inputmode="numeric">
+    </div>
+    <button class="btn-save" id="btn-save" onclick="saveEntry()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div><!-- fin app-peremptions -->
+
+<!-- APP SOLDES -->
+<div id="app-soldes" style="display:none; padding:16px;">
+  <div class="form-card">
+    <div class="form-card-title">🔍 Rechercher un article</div>
+    <div class="search-row">
+      <div class="input-wrap">
+        <input type="text" id="solde-input" placeholder="Code GCE ou Gencode..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+      </div>
+      <button class="btn-search" onclick="searchSolde()">Chercher</button>
+    </div>
+    <label class="btn-scan-below">
+      📷 Scanner un code-barres
+      <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScannerImage(this, 'solde-input', searchSolde)">
+    </label>
+    <div class="error-msg" id="solde-error"></div>
+  </div>
+
+  <div class="solde-result" id="solde-result">
+    <div class="solde-field">
+      <div class="solde-field-label">Code GCE</div>
+      <div class="solde-field-value" id="solde-code">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Designation</div>
+      <div class="solde-field-value" id="solde-designation">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Remise solde</div>
+      <div class="solde-field-value solde-remise" id="solde-remise">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Gencode</div>
+      <div class="solde-field-value" id="solde-gencode">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Fournisseur</div>
+      <div class="solde-field-value" id="solde-fournisseur">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Famille</div>
+      <div class="solde-field-value" id="solde-famille">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Sous-famille</div>
+      <div class="solde-field-value" id="solde-sous-famille">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP ARTICLES -->
+<div id="app-articles" style="display:none; padding:16px;">
+  <div class="form-card">
+    <div class="form-card-title">🔍 Rechercher un article</div>
+    <div class="search-row">
+      <div class="input-wrap">
+        <input type="text" id="article-input" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+      </div>
+      <button class="btn-search" onclick="searchArticleSection()">Chercher</button>
+    </div>
+    <label class="btn-scan-below">
+      📷 Scanner un code-barres
+      <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScannerImage(this, 'article-input', searchArticleSection)">
+    </label>
+    <div class="error-msg" id="article-error"></div>
+  </div>
+
+  <div class="solde-result" id="article-result">
+    <div class="solde-field">
+      <div class="solde-field-label">Code GCE</div>
+      <div class="solde-field-value" id="article-codegce">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Nom</div>
+      <div class="solde-field-value" id="article-nom">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Famille</div>
+      <div class="solde-field-value" id="article-famille">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Fabricant</div>
+      <div class="solde-field-value" id="article-fabricant">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">EAN</div>
+      <div class="solde-field-value" id="article-ean">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Assort</div>
+      <div class="solde-field-value" id="article-assort">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP MERCH -->
+<div id="app-merch" style="display:none; padding:16px;">
+  <div class="form-card">
+    <div class="form-card-title">🗂️ Plan Merch</div>
+    <div class="field-group">
+      <div class="label">Famille</div>
+      <select id="merch-famille" onchange="onFamilleChange()">
+        <option value="">— Choisir une famille —</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <div class="label">Assortiment</div>
+      <select id="merch-assort" onchange="loadMerch()" disabled>
+        <option value="">— Choisir d'abord une famille —</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="merch-loading" style="display:none" class="loading">
+    <div class="spinner"></div>Chargement...
+  </div>
+
+  <div id="merch-liste"></div>
+</div>
+
+<script>
+  const API = 'https://script.google.com/macros/s/AKfycbwbFUm_Ke5xoaW8tIHXMiieM22sR8O6tqzmNmOap5LhkyRuLIBN5mCA0LZuWIY4LYHVww/exec';
+
+  let currentArticle = null;
+  let allPeremptions = [];
+  let currentFilter = 'tous';
+  let filtreTraite = 'tous';
+  let familleMerchData = []; // stocke les familles + maxAssort
+
+  function setFiltreTraite(val, btn) {
+    filtreTraite = val;
+    document.querySelectorAll('#filtre-traite-tous, #filtre-traite-non, #filtre-traite-oui').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPeremptions();
+  }
+
+  // ---- SCANNER ----
+  async function handleScannerImage(input, targetId, callback) {
+    if (!input.files || !input.files[0]) return;
+    showToast('Analyse en cours...');
+
+    try {
+      const file = input.files[0];
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise(r => img.onload = r);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const reader = new ZXingBrowser.MultiFormatReader();
+      const luminanceSource = new ZXingBrowser.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+      const binaryBitmap = new ZXingBrowser.BinaryBitmap(new ZXingBrowser.HybridBinarizer(luminanceSource));
+      const result = reader.decode(binaryBitmap);
+
+      document.getElementById(targetId).value = result.getText();
+      if (callback) callback();
+
+    } catch(e) {
+      showToast('Code non reconnu — reessayez avec une photo plus nette', true);
+    }
+    input.value = '';
+  }
+
+  function openScanner() {}
+  function closeScanner() {
+    document.getElementById('scanner-overlay').classList.remove('open');
+  }
+
+  // ---- HAMBURGER MENU ----
+  function openMenu() {
+    document.getElementById('hamburger-overlay').classList.add('open');
+  }
+  function closeMenu() {
+    document.getElementById('hamburger-overlay').classList.remove('open');
+  }
+  function closeMenuOutside(e) {
+    if (e.target === document.getElementById('hamburger-overlay')) closeMenu();
+  }
+
+  // ---- SWITCH APP ----
+  function switchApp(app) {
+    closeMenu();
+    ['peremptions','soldes','articles','merch'].forEach(a => {
+      document.getElementById('app-' + a).style.display = app === a ? 'block' : 'none';
+      document.getElementById('menu-' + a).classList.toggle('active', app === a);
+    });
+    const subs = { peremptions: 'Gestion des peremptions', soldes: 'Gestion des soldes', articles: 'Recherche article', merch: 'Plan Merch' };
+    document.getElementById('header-sub').textContent = subs[app];
+    if (app === 'soldes') {
+      document.getElementById('solde-input').value = '';
+      document.getElementById('solde-result').classList.remove('visible');
+      document.getElementById('solde-error').classList.remove('visible');
+    }
+    if (app === 'articles') {
+      document.getElementById('article-input').value = '';
+      document.getElementById('article-result').classList.remove('visible');
+      document.getElementById('article-error').classList.remove('visible');
+    }
+    if (app === 'merch' && familleMerchData.length === 0) {
+      loadFamillesMerch();
+    }
+  }
+
+  // ---- MERCH ----
+  async function loadFamillesMerch() {
+    try {
+      const res = await fetch(`${API}?action=getFamillesMerch`);
+      const data = await res.json();
+      familleMerchData = data;
+      const sel = document.getElementById('merch-famille');
+      sel.innerHTML = '<option value="">— Choisir une famille —</option>';
+      data.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.famille;
+        opt.dataset.max = f.maxAssort;
+        opt.textContent = f.famille;
+        sel.appendChild(opt);
+      });
+    } catch(e) {
+      console.error('Erreur chargement familles merch', e);
+    }
+  }
+
+  function onFamilleChange() {
+    const sel = document.getElementById('merch-famille');
+    const selAssort = document.getElementById('merch-assort');
+    document.getElementById('merch-liste').innerHTML = '';
+    if (!sel.value) {
+      selAssort.innerHTML = '<option value="">— Choisir d\'abord une famille —</option>';
+      selAssort.disabled = true;
+      return;
+    }
+    const maxAssort = sel.options[sel.selectedIndex].dataset.max || 'A0';
+    const maxNum = parseInt(maxAssort.replace('A', ''));
+    selAssort.innerHTML = '<option value="">— Choisir un assortiment —</option>';
+    for (let i = 0; i <= maxNum; i++) {
+      const opt = document.createElement('option');
+      opt.value = 'A' + i;
+      opt.textContent = 'A' + i;
+      selAssort.appendChild(opt);
+    }
+    selAssort.disabled = false;
+  }
+
+  async function loadMerch() {
+    const famille = document.getElementById('merch-famille').value;
+    const assort  = document.getElementById('merch-assort').value;
+    if (!famille || !assort) return;
+
+    const liste = document.getElementById('merch-liste');
+    const loading = document.getElementById('merch-loading');
+    liste.innerHTML = '';
+    loading.style.display = 'block';
+
+    try {
+      const res = await fetch(`${API}?action=getMerch&famille=${encodeURIComponent(famille)}&assort=${encodeURIComponent(assort)}`);
+      const data = await res.json();
+      loading.style.display = 'none';
+
+      if (!data.length) {
+        liste.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>Aucun article trouvé</p></div>';
+        return;
+      }
+
+      // Trier : Option en bas, puis par assort croissant
+      data.sort((a, b) => {
+        if (a.assort === 'Option' && b.assort !== 'Option') return 1;
+        if (b.assort === 'Option' && a.assort !== 'Option') return -1;
+        return a.assort.localeCompare(b.assort);
+      });
+
+      liste.innerHTML = `<div class="merch-count">${data.length} article(s) — ${famille} jusqu'à ${assort}</div>` +
+        data.map(a => `
+          <div class="merch-card ${a.assort === 'Option' ? 'option' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="merch-code">${a.codeGCE || '—'}</div>
+              <div style="font-size:12px;color:var(--text-muted);font-family:'Nunito',sans-serif">${a.ean || '—'}</div>
+            </div>
+            <div class="merch-nom">${a.nom || '—'}</div>
+            <div class="merch-footer">
+              <span>${a.fabricant || '—'}</span>
+              <span class="merch-assort ${a.assort === 'Option' ? 'option' : ''}">${a.assort}</span>
+            </div>
+          </div>`).join('');
+    } catch(e) {
+      loading.style.display = 'none';
+      liste.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erreur de connexion</p></div>';
+    }
+  }
+
+  // ---- SEARCH ARTICLE SECTION ----
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('article-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') searchArticleSection();
+    });
+  });
+
+  async function searchArticleSection() {
+    const q = document.getElementById('article-input').value.trim();
+    if (!q) return;
+    const errEl = document.getElementById('article-error');
+    errEl.classList.remove('visible');
+    document.getElementById('article-result').classList.remove('visible');
+
+    try {
+      const res = await fetch(`${API}?action=search&query=${encodeURIComponent(q)}`);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Reponse invalide'); }
+
+      if (data.error) {
+        errEl.textContent = 'Article non trouve';
+        errEl.classList.add('visible');
+        return;
+      }
+
+      document.getElementById('article-codegce').textContent  = data.codeGCE   || '—';
+      document.getElementById('article-nom').textContent      = data.nom        || '—';
+      document.getElementById('article-famille').textContent  = data.famille    || '—';
+      document.getElementById('article-fabricant').textContent= data.fabricant  || '—';
+      document.getElementById('article-ean').textContent      = data.ean        || '—';
+      document.getElementById('article-assort').textContent   = data.assort     || '—';
+      document.getElementById('article-result').classList.add('visible');
+    } catch(e) {
+      errEl.textContent = 'Erreur de connexion';
+      errEl.classList.add('visible');
+    }
+  }
+
+  // ---- SEARCH SOLDE ----
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('solde-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') searchSolde();
+    });
+  });
+
+  async function searchSolde() {
+    const q = document.getElementById('solde-input').value.trim();
+    if (!q) return;
+    const errEl = document.getElementById('solde-error');
+    errEl.classList.remove('visible');
+    document.getElementById('solde-result').classList.remove('visible');
+
+    try {
+      const res = await fetch(`${API}?action=searchSolde&query=${encodeURIComponent(q)}`);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Reponse invalide'); }
+
+      if (data.error) {
+        errEl.textContent = 'Article non trouve dans les soldes';
+        errEl.classList.add('visible');
+        return;
+      }
+
+      document.getElementById('solde-code').textContent = data.codeGCE || '—';
+      document.getElementById('solde-designation').textContent = data.designation || '—';
+      document.getElementById('solde-gencode').textContent = data.gencode || '—';
+      document.getElementById('solde-fournisseur').textContent = data.fournisseur || '—';
+      document.getElementById('solde-famille').textContent = data.famille || '—';
+      document.getElementById('solde-sous-famille').textContent = data.sousFamille || '—';
+      document.getElementById('solde-remise').textContent = data.remise || '—';
+      document.getElementById('solde-result').classList.add('visible');
+    } catch(e) {
+      errEl.textContent = 'Erreur de connexion';
+      errEl.classList.add('visible');
+    }
+  }
+
+  // ---- TABS ----
+  function switchTab(tab) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-' + tab).classList.add('active');
+    document.querySelectorAll('.nav-tab')[tab === 'tableau' ? 0 : 1].classList.add('active');
+    if (tab === 'tableau') loadPeremptions();
+  }
+
+  // ---- AUTO FORMAT DATES ----
+  function autoFormatDate(input) {
+    input.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, ''); // que les chiffres
+      if (v.length >= 3 && v.length <= 4) v = v.slice(0,2) + '/' + v.slice(2);
+      else if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4,8);
+      this.value = v;
+    });
+  }
+  autoFormatDate(document.getElementById('input-reception'));
+  autoFormatDate(document.getElementById('input-peremption'));
+
+  // ---- SEARCH ----
+  document.getElementById('input-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchArticle();
+  });
+
+  async function searchArticle() {
+    const q = document.getElementById('input-search').value.trim();
+    if (!q) return;
+    const errEl = document.getElementById('error-search');
+    errEl.classList.remove('visible');
+    document.getElementById('article-info').classList.remove('visible');
+    document.getElementById('form-dates').style.display = 'none';
+    document.getElementById('form-new-article').style.display = 'none';
+    currentArticle = null;
+
+    try {
+      const res = await fetch(`${API}?action=search&query=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (data.error) {
+        // Article non trouvé → proposer la création
+        errEl.innerHTML = '❌ Article non trouvé — <strong>Voulez-vous créer cet article ?</strong>';
+        errEl.classList.add('visible');
+        document.getElementById('form-new-article').style.display = 'block';
+        document.getElementById('new-codegce').value = q;
+        document.getElementById('new-nom').value = '';
+        document.getElementById('new-famille').value = '';
+        document.getElementById('new-ean').value = '';
+        document.getElementById('new-fabricant').value = '';
+        document.getElementById('new-assort').value = '';
+        return;
+      }
+      currentArticle = data;
+      document.getElementById('art-nom').textContent = data.nom || '—';
+      document.getElementById('art-ean').textContent = data.ean || '—';
+      document.getElementById('art-famille').textContent = data.famille || '—';
+      document.getElementById('art-fabricant').textContent = data.fabricant || '—';
+      document.getElementById('art-assort').textContent = data.assort || '—';
+      document.getElementById('article-info').classList.add('visible');
+      document.getElementById('form-dates').style.display = 'block';
+    } catch (e) {
+      errEl.textContent = '❌ Erreur de connexion';
+      errEl.classList.add('visible');
+    }
+  }
+
+  // ---- CREER ARTICLE ----
+  async function createArticle() {
+    const codeGCE   = document.getElementById('new-codegce').value.trim();
+    const nom       = document.getElementById('new-nom').value.trim();
+    const famille   = document.getElementById('new-famille').value.trim();
+    const ean       = document.getElementById('new-ean').value.trim();
+    const fabricant = document.getElementById('new-fabricant').value.trim();
+    const assort    = document.getElementById('new-assort').value;
+
+    if (!codeGCE || !nom || !famille || !ean) {
+      showToast('Remplis les champs obligatoires *', true);
+      return;
+    }
+
+    const btn = document.querySelector('.btn-create-article');
+    btn.disabled = true;
+    btn.textContent = '⏳ Création...';
+
+    try {
+      const url = API
+        + '?action=createArticle'
+        + '&codeGCE='   + encodeURIComponent(codeGCE)
+        + '&nom='       + encodeURIComponent(nom)
+        + '&famille='   + encodeURIComponent(famille)
+        + '&ean='       + encodeURIComponent(ean)
+        + '&fabricant=' + encodeURIComponent(fabricant)
+        + '&assort='    + encodeURIComponent(assort);
+
+      const res = await fetch(url);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Reponse invalide'); }
+
+      if (data.success) {
+        showToast('✅ Article créé !');
+        // On pré-remplit currentArticle pour enchaîner avec les dates
+        currentArticle = { codeGCE, nom, ean, famille, fabricant, assort };
+        document.getElementById('art-nom').textContent = nom;
+        document.getElementById('art-ean').textContent = ean;
+        document.getElementById('art-famille').textContent = famille;
+        document.getElementById('art-fabricant').textContent = fabricant || '—';
+        document.getElementById('art-assort').textContent = assort || '—';
+        document.getElementById('article-info').classList.add('visible');
+        document.getElementById('form-new-article').style.display = 'none';
+        document.getElementById('error-search').classList.remove('visible');
+        document.getElementById('form-dates').style.display = 'block';
+      } else {
+        showToast('Erreur lors de la création', true);
+      }
+    } catch(e) {
+      showToast('Erreur de connexion', true);
+    }
+
+    btn.disabled = false;
+    btn.textContent = '✅ Créer l\'article';
+  }
+
+  // ---- SAVE ----
+  function parseDate(str) {
+    // Accepte JJ/MM/AAAA ou JJ-MM-AAAA
+    const parts = str.trim().split(/[\/\-]/);
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts;
+    if (d.length > 2 || m.length > 2 || y.length !== 4) return null;
+    const date = new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+    if (isNaN(date.getTime())) return null;
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+
+  async function saveEntry() {
+    if (!currentArticle) return;
+    const datePRaw = document.getElementById('input-peremption').value.trim();
+    const dateRRaw = document.getElementById('input-reception').value.trim();
+    if (!datePRaw) { showToast('Indique une date de péremption', true); return; }
+    const dateP = parseDate(datePRaw);
+    if (!dateP) { showToast('Format invalide (JJ/MM/AAAA)', true); return; }
+    const dateR = dateRRaw ? parseDate(dateRRaw) : '';
+    if (dateRRaw && !dateR) { showToast('Date réception invalide (JJ/MM/AAAA)', true); return; }
+
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enregistrement...';
+
+    try {
+      const res = await fetch(`${API}?action=save&codeGCE=${encodeURIComponent(currentArticle.codeGCE)}&nom=${encodeURIComponent(currentArticle.nom || '')}&dateReception=${encodeURIComponent(dateR)}&datePeremption=${encodeURIComponent(dateP)}`);
+      const data = await res.json();
+      if (data.success) {
+        showToast('✅ Enregistré !');
+        // Reset
+        document.getElementById('input-search').value = '';
+        document.getElementById('input-reception').value = '';
+        document.getElementById('input-peremption').value = '';
+        document.getElementById('article-info').classList.remove('visible');
+        document.getElementById('form-dates').style.display = 'none';
+        currentArticle = null;
+      } else {
+        showToast('Erreur lors de l\'enregistrement', true);
+      }
+    } catch (e) {
+      showToast('Erreur de connexion', true);
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Enregistrer';
+  }
+
+  // ---- LOAD PEREMPTIONS ----
+  async function loadPeremptions() {
+    document.getElementById('liste-peremptions').innerHTML = '<div class="loading"><div class="spinner"></div>Chargement...</div>';
+    try {
+      const res = await fetch(`${API}?action=getAll`);
+      const data = await res.json();
+      allPeremptions = Array.isArray(data) ? data : [];
+      renderPeremptions();
+    } catch (e) {
+      document.getElementById('liste-peremptions').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erreur de connexion</p></div>';
+    }
+  }
+
+  function getStatus(dateStr) {
+    if (!dateStr) return 'ok';
+    const d = new Date(dateStr);
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const diff = Math.floor((d - now) / 86400000);
+    if (diff > 60) return 'ok';           // plus de 60j avant : vert
+    if (diff >= 0) return 'warn';          // 0 à 60j avant : jaune -20%
+    if (diff >= -45) return 'soon';        // 0 à 45j dépassés : orange -30%
+    if (diff >= -60) return 'soon-dark';   // 46 à 60j dépassés : orange foncé -50%
+    return 'danger';                       // plus de 60j dépassés : rouge, retrait
+  }
+
+  function getDaysLabel(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const diff = Math.floor((d - now) / 86400000);
+    if (diff < 0) return `Dépassé de ${Math.abs(diff)}j`;
+    if (diff === 0) return 'Périme aujourd\'hui !';
+    if (diff <= 40) return `Dans ${diff}j`;
+    return `Dans ${diff}j`;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('fr-FR');
+  }
+
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderPeremptions();
+  }
+
+  function renderPeremptions() {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    let ok = 0, warn = 0, soon = 0, soonDark = 0, danger = 0;
+    let filtered = allPeremptions.filter(p => {
+      const s = getStatus(p.datePeremption);
+      if (s === 'ok') ok++;
+      else if (s === 'warn') warn++;
+      else if (s === 'soon') soon++;
+      else if (s === 'soon-dark') soonDark++;
+      else danger++;
+
+      // Filtre couleur
+      if (currentFilter !== 'tous' && s !== currentFilter) return false;
+
+      // Filtre traité
+      const estTraite = p.statutTraite === 'OUI' && p.categorieTraitement === s;
+      if (filtreTraite === 'oui' && !estTraite) return false;
+      if (filtreTraite === 'non' && estTraite) return false;
+
+      return true;
+    });
+
+    // Trier : danger d'abord, soon-dark, soon, warn, ok — puis traités en dernier
+    filtered.sort((a, b) => {
+      const order = { danger: 0, 'soon-dark': 1, soon: 2, warn: 3, ok: 4 };
+      const sa = getStatus(a.datePeremption), sb = getStatus(b.datePeremption);
+      const ta = a.statutTraite === 'OUI' && a.categorieTraitement === sa;
+      const tb = b.statutTraite === 'OUI' && b.categorieTraitement === sb;
+      if (ta !== tb) return ta ? 1 : -1;
+      return order[sa] - order[sb];
+    });
+
+    document.getElementById('stat-ok').textContent = ok;
+    document.getElementById('stat-warn').textContent = warn;
+    document.getElementById('stat-soon').textContent = soon;
+    document.getElementById('stat-soon-dark').textContent = soonDark;
+    document.getElementById('stat-danger').textContent = danger;
+
+    if (filtered.length === 0) {
+      document.getElementById('liste-peremptions').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🌿</div>
+          <p>Aucune péremption enregistrée</p>
+        </div>`;
+      return;
+    }
+
+    const remiseLabel = { ok: '', warn: '-20%', soon: '-30%', 'soon-dark': '-50%', danger: 'A retirer' };
+    const badgeLabels = { ok: 'OK', warn: 'Bientot', soon: 'Perime', 'soon-dark': 'Perime +45j', danger: 'Retrait' };
+    const badgeClasses = { ok: 'badge-ok', warn: 'badge-warn', soon: 'badge-soon', 'soon-dark': 'badge-soon-dark', danger: 'badge-danger' };
+    const daysColors = { ok: 'var(--green-light)', warn: 'var(--yellow)', soon: 'var(--orange)', 'soon-dark': 'var(--orange-dark)', danger: 'var(--red)' };
+
+    document.getElementById('liste-peremptions').innerHTML = filtered.map(p => {
+      const status = getStatus(p.datePeremption);
+      const daysLabel = getDaysLabel(p.datePeremption);
+      const estTraite = p.statutTraite === 'OUI' && p.categorieTraitement === status;
+
+      return `
+        <div class="perem-card ${status} ${estTraite ? 'traite' : ''}">
+          <div class="perem-header">
+            <div>
+              <div class="perem-code">${p.codeGCE || '—'}</div>
+              ${p.nom ? `<div class="perem-nom">${p.nom}</div>` : ''}
+            </div>
+            <span class="perem-badge ${badgeClasses[status]}">${badgeLabels[status]}</span>
+          </div>
+          <div class="perem-meta">
+            ${p.famille ? `<div class="tag">${p.famille}</div>` : ''}
+            ${p.fabricant ? `<div class="tag">${p.fabricant}</div>` : ''}
+          </div>
+          <div class="perem-dates">
+            ${p.dateReception ? `<div>Reception : <strong>${formatDate(p.dateReception)}</strong></div>` : ''}
+            <div>Peremption : <strong>${formatDate(p.datePeremption)}</strong></div>
+            ${daysLabel ? `<div style="color:${daysColors[status]};font-weight:700">${daysLabel}</div>` : ''}
+          </div>
+          ${remiseLabel[status] ? `<div style="margin-top:8px;font-weight:800;font-size:13px;color:${daysColors[status]}">${remiseLabel[status]}</div>` : ''}
+          ${status !== 'ok' ? `
+          <button class="btn-traiter ${estTraite ? 'traite' : ''}"
+            onclick="traiterArticle('${p.codeGCE}', '${p.datePeremption}', '${status}', this)">
+            ${estTraite ? 'Traite' : 'Marquer comme traite'}
+          </button>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // ---- TRAITER ARTICLE ----
+  async function traiterArticle(codeGCE, datePeremption, categorie, btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳...';
+    try {
+      const url = API
+        + '?action=traiter'
+        + '&codeGCE=' + encodeURIComponent(codeGCE)
+        + '&datePeremption=' + encodeURIComponent(datePeremption)
+        + '&categorie=' + encodeURIComponent(categorie);
+      const res = await fetch(url);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Réponse invalide'); }
+      if (data.success) {
+        btn.classList.add('traite');
+        btn.textContent = '✅ Traité';
+        btn.closest('.perem-card').classList.add('traite');
+        showToast('✅ Article marqué comme traité');
+      } else {
+        showToast('Erreur : ' + (data.error || 'inconnue'), true);
+        btn.disabled = false;
+        btn.textContent = '👉 Marquer comme traité';
+      }
+    } catch(e) {
+      showToast('Erreur de connexion', true);
+      btn.disabled = false;
+      btn.textContent = '👉 Marquer comme traité';
+    }
+  }
+
+  // ---- TOAST ----
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2500);
+  }
+
+  // Init
+  loadPeremptions();
+</script>
+</body>
+</html>
