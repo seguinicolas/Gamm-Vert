@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Gamm Vert — Péremptions</title>
+  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -920,7 +921,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="input-search" placeholder="Code GCE ou EAN..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="input-search" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchArticle()">Chercher</button>
     </div>
@@ -1003,7 +1004,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="solde-input" placeholder="Code GCE ou Gencode..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="solde-input" placeholder="Code GCE ou Gencode..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchSolde()">Chercher</button>
     </div>
@@ -1052,7 +1053,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="article-input" placeholder="Code GCE ou EAN..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="article-input" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchArticleSection()">Chercher</button>
     </div>
@@ -1065,16 +1066,8 @@
 
   <div class="solde-result" id="article-result">
     <div class="solde-field">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div class="solde-field-label">Code GCE</div>
-          <div class="solde-field-value" id="article-codegce">—</div>
-        </div>
-        <div style="text-align:right">
-          <div class="solde-field-label">Gencode</div>
-          <div class="solde-field-value" id="article-ean">—</div>
-        </div>
-      </div>
+      <div class="solde-field-label">Code GCE</div>
+      <div class="solde-field-value" id="article-codegce">—</div>
     </div>
     <div class="solde-field">
       <div class="solde-field-label">Nom</div>
@@ -1088,17 +1081,13 @@
       <div class="solde-field-label">Fabricant</div>
       <div class="solde-field-value" id="article-fabricant">—</div>
     </div>
-    <div class="solde-field" style="border-bottom:none">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div class="solde-field-label">Assort</div>
-          <div class="solde-field-value" id="article-assort">—</div>
-        </div>
-        <div style="text-align:right">
-          <div class="solde-field-label">Merch</div>
-          <div class="solde-field-value" id="article-merch" style="font-size:13px">—</div>
-        </div>
-      </div>
+    <div class="solde-field">
+      <div class="solde-field-label">EAN</div>
+      <div class="solde-field-value" id="article-ean">—</div>
+    </div>
+    <div class="solde-field">
+      <div class="solde-field-label">Assort</div>
+      <div class="solde-field-value" id="article-assort">—</div>
     </div>
   </div>
 </div>
@@ -1151,50 +1140,29 @@
 
     try {
       const file = input.files[0];
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise(r => img.onload = r);
 
-      // Convertir en base64
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
 
-      // Envoyer à l'API Anthropic pour décoder le code-barres
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 100,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: file.type || 'image/jpeg', data: base64 }
-              },
-              {
-                type: 'text',
-                text: 'This image contains a barcode. Read the barcode and return ONLY the numeric code, nothing else. No explanation, no text, just the numbers.'
-              }
-            ]
-          }]
-        })
-      });
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const reader = new ZXingBrowser.MultiFormatReader();
+      const luminanceSource = new ZXingBrowser.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+      const binaryBitmap = new ZXingBrowser.BinaryBitmap(new ZXingBrowser.HybridBinarizer(luminanceSource));
+      const result = reader.decode(binaryBitmap);
 
-      const data = await response.json();
-      const code = data.content[0].text.trim().replace(/\D/g, '');
-
-      if (code) {
-        document.getElementById(targetId).value = code;
-        if (callback) callback();
-      } else {
-        showToast('Code non reconnu — reessayez', true);
-      }
+      document.getElementById(targetId).value = result.getText();
+      if (callback) callback();
 
     } catch(e) {
-      showToast('Erreur lors du scan', true);
+      showToast('Code non reconnu — reessayez avec une photo plus nette', true);
     }
     input.value = '';
   }
@@ -1352,52 +1320,12 @@
         return;
       }
 
-      document.getElementById('article-codegce').textContent   = data.codeGCE   || '—';
-      document.getElementById('article-nom').textContent       = data.nom        || '—';
-      document.getElementById('article-famille').textContent   = data.famille    || '—';
-      document.getElementById('article-fabricant').textContent = data.fabricant  || '—';
-      document.getElementById('article-ean').textContent       = data.ean        || '—';
-      document.getElementById('article-assort').textContent    = data.assort     || '—';
-
-      // Reset merch
-      const merchEl = document.getElementById('article-merch');
-      const assortEl = document.getElementById('article-assort');
-      merchEl.textContent = '—';
-      merchEl.style.color = '';
-      assortEl.style.color = '';
-
-      // Récupérer données Assortiment
-      if (data.famille) {
-        try {
-          const resA = await fetch(`${API}?action=getAssortiment&famille=${encodeURIComponent(data.famille)}`);
-          const assortData = JSON.parse(await resA.text());
-
-          if (!assortData.error) {
-            // Concaténation D+C+F+G : assortiment + format + nombre + hauteur
-            const parts = [];
-            if (assortData.assortiment) parts.push(assortData.assortiment);
-            if (assortData.format)      parts.push(assortData.format);
-            if (assortData.nombre)      parts.push(assortData.nombre);
-            if (assortData.hauteur)     parts.push(assortData.hauteur);
-            merchEl.textContent = parts.join(' · ') || '—';
-
-            // Colorier selon assort Naucelle
-            const articleAssortNum = data.assort === 'Option' ? -1 : parseInt((data.assort || '').replace('A',''));
-            const naucelleAssortNum = parseInt((assortData.assortiment || '').replace('A',''));
-
-            if (data.assort === 'Option' || articleAssortNum <= naucelleAssortNum) {
-              assortEl.style.color = 'var(--green-light)';
-              merchEl.style.color  = 'var(--green-light)';
-            } else {
-              assortEl.style.color = 'var(--red)';
-              merchEl.style.color  = 'var(--red)';
-            }
-          }
-        } catch(e) {
-          // silencieux si pas de données assortiment
-        }
-      }
-
+      document.getElementById('article-codegce').textContent  = data.codeGCE   || '—';
+      document.getElementById('article-nom').textContent      = data.nom        || '—';
+      document.getElementById('article-famille').textContent  = data.famille    || '—';
+      document.getElementById('article-fabricant').textContent= data.fabricant  || '—';
+      document.getElementById('article-ean').textContent      = data.ean        || '—';
+      document.getElementById('article-assort').textContent   = data.assort     || '—';
       document.getElementById('article-result').classList.add('visible');
     } catch(e) {
       errEl.textContent = 'Erreur de connexion';
