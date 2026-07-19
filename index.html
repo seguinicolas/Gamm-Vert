@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Gamm Vert — Péremptions</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -921,7 +921,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="input-search" placeholder="Code GCE ou EAN..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="input-search" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchArticle()">Chercher</button>
     </div>
@@ -1004,7 +1004,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="solde-input" placeholder="Code GCE ou Gencode..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="solde-input" placeholder="Code GCE ou Gencode..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchSolde()">Chercher</button>
     </div>
@@ -1053,7 +1053,7 @@
     <div class="form-card-title">🔍 Rechercher un article</div>
     <div class="search-row">
       <div class="input-wrap">
-        <input type="text" id="article-input" placeholder="Code GCE ou EAN..." autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
+        <input type="text" id="article-input" placeholder="Code GCE ou EAN..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="numeric">
       </div>
       <button class="btn-search" onclick="searchArticleSection()">Chercher</button>
     </div>
@@ -1066,10 +1066,15 @@
 
   <div class="solde-result" id="article-result">
     <div class="solde-field">
-      <div class="solde-field-label">Code GCE</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="solde-field-value" id="article-codegce">—</div>
-        <div style="font-size:12px;color:var(--text-muted)" id="article-ean">—</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="solde-field-label">Code GCE</div>
+          <div class="solde-field-value" id="article-codegce">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="solde-field-label">Gencode</div>
+          <div class="solde-field-value" id="article-ean">—</div>
+        </div>
       </div>
     </div>
     <div class="solde-field">
@@ -1085,8 +1090,16 @@
       <div class="solde-field-value" id="article-fabricant">—</div>
     </div>
     <div class="solde-field" style="border-bottom:none">
-      <div class="solde-field-label">Plan Merch</div>
-      <div class="solde-field-value" id="article-assort" style="font-weight:800;font-size:15px">—</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="solde-field-label">Assort</div>
+          <div class="solde-field-value" id="article-assort">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="solde-field-label">Merch</div>
+          <div class="solde-field-value" id="article-merch" style="font-size:13px">—</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1137,27 +1150,36 @@
     if (!input.files || !input.files[0]) return;
     showToast('Analyse en cours...');
 
-    const file = input.files[0];
-    const url = URL.createObjectURL(file);
+    try {
+      const file = input.files[0];
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise(r => img.onload = r);
 
-    Quagga.decodeSingle({
-      decoder: {
-        readers: ['ean_reader', 'ean_8_reader', 'code_128_reader', 'code_39_reader', 'upc_reader']
-      },
-      locate: true,
-      src: url
-    }, function(result) {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
-      input.value = '';
-      if (result && result.codeResult) {
-        document.getElementById(targetId).value = result.codeResult.code;
-        if (callback) callback();
-      } else {
-        showToast('Code non reconnu — reessayez avec une photo plus nette', true);
-      }
-    });
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const reader = new ZXingBrowser.MultiFormatReader();
+      const luminanceSource = new ZXingBrowser.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+      const binaryBitmap = new ZXingBrowser.BinaryBitmap(new ZXingBrowser.HybridBinarizer(luminanceSource));
+      const result = reader.decode(binaryBitmap);
+
+      document.getElementById(targetId).value = result.getText();
+      if (callback) callback();
+
+    } catch(e) {
+      showToast('Code non reconnu — reessayez avec une photo plus nette', true);
+    }
+    input.value = '';
   }
 
+  function openScanner() {}
   function closeScanner() {
     document.getElementById('scanner-overlay').classList.remove('open');
   }
@@ -1310,47 +1332,49 @@
         return;
       }
 
-      document.getElementById('article-codegce').textContent  = data.codeGCE   || '—';
-      document.getElementById('article-nom').textContent      = data.nom        || '—';
-      document.getElementById('article-famille').textContent  = data.famille    || '—';
-      document.getElementById('article-fabricant').textContent= data.fabricant  || '—';
-      document.getElementById('article-ean').textContent      = data.ean        || '—';
+      document.getElementById('article-codegce').textContent   = data.codeGCE   || '—';
+      document.getElementById('article-nom').textContent       = data.nom        || '—';
+      document.getElementById('article-famille').textContent   = data.famille    || '—';
+      document.getElementById('article-fabricant').textContent = data.fabricant  || '—';
+      document.getElementById('article-ean').textContent       = data.ean        || '—';
+      document.getElementById('article-assort').textContent    = data.assort     || '—';
 
-      // Récupérer les données assortiment Naucelle
+      // Reset merch
+      const merchEl = document.getElementById('article-merch');
       const assortEl = document.getElementById('article-assort');
-      assortEl.textContent = '—';
+      merchEl.textContent = '—';
+      merchEl.style.color = '';
       assortEl.style.color = '';
 
-      if (data.famille && data.assort) {
+      // Récupérer données Assortiment
+      if (data.famille) {
         try {
           const resA = await fetch(`${API}?action=getAssortiment&famille=${encodeURIComponent(data.famille)}`);
-          const textA = await resA.text();
-          const assortData = JSON.parse(textA);
+          const assortData = JSON.parse(await resA.text());
 
           if (!assortData.error) {
-            const articleAssortNum = data.assort === 'Option' ? -1 : parseInt(data.assort.replace('A',''));
-            const naucelleAssortNum = parseInt(assortData.assortiment.replace('A',''));
-
-            // Construire la concaténation
+            // Concaténation D+C+F+G : assortiment + format + nombre + hauteur
             const parts = [];
-            if (data.assort === 'Option') parts.push('Option');
-            else parts.push(data.assort);
-            if (assortData.format)   parts.push(assortData.format);
-            if (assortData.nombre)   parts.push(assortData.nombre);
-            if (assortData.hauteur)  parts.push(assortData.hauteur);
-            assortEl.textContent = parts.join(' · ');
+            if (assortData.assortiment) parts.push(assortData.assortiment);
+            if (assortData.format)      parts.push(assortData.format);
+            if (assortData.nombre)      parts.push(assortData.nombre);
+            if (assortData.hauteur)     parts.push(assortData.hauteur);
+            merchEl.textContent = parts.join(' · ') || '—';
 
-            // Colorier selon Naucelle
+            // Colorier selon assort Naucelle
+            const articleAssortNum = data.assort === 'Option' ? -1 : parseInt((data.assort || '').replace('A',''));
+            const naucelleAssortNum = parseInt((assortData.assortiment || '').replace('A',''));
+
             if (data.assort === 'Option' || articleAssortNum <= naucelleAssortNum) {
-              assortEl.style.color = 'var(--green-light)'; // vert = dans assort Naucelle
+              assortEl.style.color = 'var(--green-light)';
+              merchEl.style.color  = 'var(--green-light)';
             } else {
-              assortEl.style.color = 'var(--text-muted)'; // gris = hors assort
+              assortEl.style.color = 'var(--text-muted)';
+              merchEl.style.color  = 'var(--text-muted)';
             }
-          } else {
-            assortEl.textContent = data.assort || '—';
           }
         } catch(e) {
-          assortEl.textContent = data.assort || '—';
+          // silencieux si pas de données assortiment
         }
       }
 
